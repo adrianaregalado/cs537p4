@@ -625,7 +625,7 @@ int fork2(int slice){
     struct proc *curproc = myproc();
 
     // TODO: Not sure if this should be np or curproc
-    np->timeslice[NPROC] = slice;
+    curproc->timeslice[NPROC] = slice;
 
     // Allocate process.
     if((np = allocproc()) == 0){
@@ -662,7 +662,7 @@ int fork2(int slice){
   return -1;
 }
 
-int getpinfo(struct pstat *){
+int getpinfo(struct pstat *pstat){
   // int inuse[NPROC]; // whether this slot of the process table is in use (1 or 0)
   // int pid[NPROC]; // PID of each process
   // int timeslice[NPROC]; // number of base ticks this process can run in a timeslice
@@ -676,10 +676,14 @@ int getpinfo(struct pstat *){
   // when state in ptable is UNUSED then inuse is 0, else 1
   // pstat->timeslice[i];
 
+  // get pid
+  // find process in ptable with that pid
+  // loop through pstat statistics in proc and update pstat struc
+
   for (int i = 0; i < NPROC; i++) {
       // Do I need this?: release(&ptable.lock);
       pstat->inuse[i] = ptable.stats->inuse[i];
-      pstat->pid[i] = ptable.stats->pid;
+      pstat->pid[i] = ptable.stats->pid[i];
       pstat->timeslice[i] = ptable.stats->timeslice[i];
       pstat->compticks[i] = ptable.stats->compticks[i];
       pstat->schedticks[i] = ptable.stats->schedticks[i];
