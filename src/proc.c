@@ -7,85 +7,60 @@
 #include "proc.h"
 #include "spinlock.h"
 
-// // Implementing a queue
-// struct Queue{
-//   int front, rear, size;
-//   unsigned capacity;
-//   int *array;
-// };
+// LINKED LIST 
+// NODE STRUCTURE
+struct proc *head_proc = NULL;
+struct proc *last_proc = NULL;
+struct proc *found_proc = NULL;
 
-// // initializing a queue of size = 0
-// // can alot the capacity
-// struct Queue* createQueue(unsigned capacity){
-//   struct Queue* queue = struct(Queue*)malloc(sizeof(struct Queue));
-//   queue ->capacity = capacity;
-//   queue -> front = queue->size = 0;
+// ENQUEUE THE PROCESS
+void enqueue(struct proc *new_proc) {
+    struct proc *new = (struct proc*) malloc(sizeof(struct proc));
+    new = new_proc;
+    last_proc->next = new;
+    last_proc = new;
+}
 
-//   queue -> rear = capacity -1;
-//   queue -> array = (int*)malloc(queue->capacity * sizeof(int));
-//   return queue;
-// }
+//DEQUEUE THE PROCESS
+void dequeue() {
+    head_proc = head_proc->next;
+}
 
-// // checks if the queue is empty
-// int isEmpty(struct Queue* queue){
-//   return(queue->size == 0);
-// }
+// DELETING THE PROCESS WITH PID
+void delete(int pid) {
+    struct proc *curr_proc = head_proc;
+    struct proc *prev_proc = NULL;
+    if (curr_proc == NULL) {
+        exit(0);
+    }
+    // if no process in queue
+    if (curr_proc->pid == pid) {
+        curr_proc = curr_proc->next;
+        return;
+    }
+    while (curr_proc->pid != 0) {
+        if (curr_proc->next == NULL) {
+            exit(0);
+        } else {
+            prev_proc = curr_proc;
+            curr_proc = curr_proc->next;
+        }
+    }
+    prev_proc->next = curr_proc->next;
+}
 
-// // checks if the queue is full
-// int isFull(struct Queue* queue){
-//   return(queue->size == queue->capacity);
-// }
-
-// // adding an item to the queue
-// void enqueue(struct Queue* queue, int item){
-//   if(isFull(queue)){ return; }
-//   queue->rear = (queue->rear+1) % queue -> capacity;
-//   queue->array[queue->rear] = item;
-//   queue->size = queue->size +1;
-//   printf("%d enqueue to queue\n", item);
-// }
-
-// // removing an item from the queue
-// int dequeue(struct Queue* queue){
-//   if(isEmpty(queue)){ return INT_MIN; }
-//   int item = queue->array[queue->front];
-//   queue->front = (queue->front + 1) % queue->capacity;
-//   queue->size = queue->size -1;
-//   return item;
-// }
-
-// // to get the front of the queue
-// int front(struct Queue* queue){
-//   if(isEmpty(queue)){ return INT_MIN; }
-//   return queue->array[queue->front];
-// }
-
-// // to get the rear of the queue
-// int rear(struct Queue* queue){
-//   if(isEmpty(queue)){ return INT_MIN; }
-//   return queue->array[queue->rear];
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// FINDING NAME
+int find(int proc_pid) {
+    struct proc *curr_proc = head_proc;
+    while (curr_proc != NULL) {
+        if (curr_proc->pid == proc_pid) {
+            found_proc = curr_proc;
+            return 1;
+        }
+        curr_proc = curr_proc->next;
+    }
+    return 0;
+}
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -191,6 +166,17 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
+    
+  // Adding the process to the queue
+  p -> timeslice = 1;
+  p -> next = NULL;
+  p -> compticks = 0;
+  p -> usedticks = 0;
+  p -> schedticks = 0;
+  p -> sleepticks = 0;
+  p -> switches = 0;
+  p -> context = (struct context*) sp;
+  enqueue(p);
 
   return p;
 }
@@ -346,6 +332,10 @@ exit(void)
   curproc->state = ZOMBIE;
   sched();
   panic("zombie exit");
+    
+  // remove the process
+  dequeue(p);
+    
 }
 
 // Wait for a child process to exit and return its pid.
