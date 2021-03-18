@@ -676,10 +676,6 @@ int getpinfo(struct pstat *){
   // when state in ptable is UNUSED then inuse is 0, else 1
   // pstat->timeslice[i];
 
-  // get pid
-  // find process in ptable with that pid
-  // loop through pstat statistics in proc and update pstat struc
-
   for (int i = 0; i < NPROC; i++) {
       // Do I need this?: release(&ptable.lock);
       pstat->inuse[i] = ptable.stats->inuse[i];
@@ -689,7 +685,6 @@ int getpinfo(struct pstat *){
       pstat->schedticks[i] = ptable.stats->schedticks[i];
       pstat->sleepticks[i] = ptable.stats->sleepticks[i];
       pstat->switches[i] = ptable.stats->switches[i];
-      i++;
   }
   return -1;
 }
