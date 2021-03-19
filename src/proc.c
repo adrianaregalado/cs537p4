@@ -15,10 +15,21 @@ struct proc *found_proc = NULL;
 
 // ENQUEUE THE PROCESS
 void enqueue(struct proc *new_proc) {
-    struct proc *new = (struct proc*) malloc(sizeof(struct proc));
-    new = new_proc;
-    last_proc->next = new;
-    last_proc = new;
+  if(new_proc == NULL){
+    return;
+  }
+  if(head_proc != NULL){
+    last_proc->next = new_proc;
+    new_proc -> next = NULL;
+    last_proc = new_proc;
+    
+  }
+  else{
+    head_proc = new_proc;
+    head_proc->next = NULL;
+    last_proc = new_proc;
+    last_proc->next = NULL;
+    }
 }
 
 //DEQUEUE THE PROCESS
@@ -27,40 +38,41 @@ void dequeue() {
 }
 
 // DELETING THE PROCESS WITH PID
-void delete(int pid) {
-    struct proc *curr_proc = head_proc;
-    struct proc *prev_proc = NULL;
-    if (curr_proc == NULL) {
-        exit(0);
-    }
-    // if no process in queue
-    if (curr_proc->pid == pid) {
-        curr_proc = curr_proc->next;
-        return;
-    }
-    while (curr_proc->pid != 0) {
-        if (curr_proc->next == NULL) {
-            exit(0);
-        } else {
-            prev_proc = curr_proc;
-            curr_proc = curr_proc->next;
-        }
-    }
+void delete(struct proc *del_proc) {
+  if(del_proc == NULL || head_proc == NULL){
+    return;
+  }
+  struct proc *curr_proc = head_proc;
+  struct proc *prev_proc = head_proc;
+  //if in head
+  if(curr_proc->pid == del_proc->pid){
+    //just change the head, tail remains same
+    head_proc = curr_proc->next;
+    curr_proc = NULL;
+    prev_proc = NULL;
+  }
+  //not in the head
+  while(curr_proc != NULL && curr_proc->pid != del_proc->pid){
+    prev_proc = curr_proc;
+    curr_proc = curr_proc->next;
+  }
+  //means the last item is to be removed
+  if(curr_proc->pid == tail_proc->pid){
+    prev_proc->next = NULL;
+    tail_proc = prev_proc;
+    curr_proc = NULL;
+    prev_proc = NULL;
+  }
+  //its a node in between
+  else{
     prev_proc->next = curr_proc->next;
+    curr_proc = NULL;
+    prev_proc = NULL;
+  }
+  return;
 }
 
-// FINDING NAME
-int find(int proc_pid) {
-    struct proc *curr_proc = head_proc;
-    while (curr_proc != NULL) {
-        if (curr_proc->pid == proc_pid) {
-            found_proc = curr_proc;
-            return 1;
-        }
-        curr_proc = curr_proc->next;
-    }
-    return 0;
-}
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
