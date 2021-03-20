@@ -581,10 +581,22 @@ static void
 wakeup1(void *chan)
 {
   struct proc *p;
-
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == SLEEPING && p->chan == chan)
-      p->state = RUNNABLE;
+    if(p->state == SLEEPING && p->chan == chan) {
+      // have some additional condition checking to avoid falsely waking up the sleeping process
+      // (e.g. checking whether chan == &ticks, and whether it is the right time to wake up, etc)
+      // if (chan == &ticks && ticks < p->targettime) {
+
+      // }
+      // else{
+      //   p->state = RUNNABLE;
+      //   p->slept = ticks - p->sleptat;
+
+      //   p->comp = p->slept;
+      //   p->sleepticks += p->slept;
+      //   enqueue(p);
+      // }
+    }
 }
 
 // Wake up all processes sleeping on chan.
@@ -619,17 +631,6 @@ kill(int pid)
   return -1;
 }
 
-
-
-
-
-
-
-
-
-
-
-
 //adding the syscalls
 int setslice(int pid, int slice){
   if (slice > 0) {
@@ -638,7 +639,7 @@ int setslice(int pid, int slice){
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->pid == pid){
         release(&ptable.lock);
-        p->timeslice[NPROC] = slice; // "change timeslice in ptable" ?
+        p->timeslice = slice;
         return 0;
       }
     }
@@ -653,7 +654,7 @@ int getslice(int pid){
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid){
       release(&ptable.lock);
-      return p->timeslice[NPROC];
+      return p->timeslice;
     }
   }
   release(&ptable.lock);
@@ -667,7 +668,7 @@ int fork2(int slice){
     struct proc *curproc = myproc();
 
     // TODO: Not sure if this should be np or curproc
-    curproc->timeslice[NPROC] = slice;
+    curproc->timeslice = slice;
 
     // Allocate process.
     if((np = allocproc()) == 0){
@@ -705,14 +706,6 @@ int fork2(int slice){
 }
 
 int getpinfo(struct pstat *pstat){
-  // int inuse[NPROC]; // whether this slot of the process table is in use (1 or 0)
-  // int pid[NPROC]; // PID of each process
-  // int timeslice[NPROC]; // number of base ticks this process can run in a timeslice
-  // int compticks[NPROC]; // number of compensation ticks this process has used
-  // int schedticks[NPROC];  // total number of timer ticks this process has been scheduled
-  // int sleepticks[NPROC]; // number of ticks during which this process was blocked
-  // int switches[NPROC];  // total num times this process has been scheduled
-
   // TODO: pass a pointer and iterate through the ptable to get the info for each process.
   // get struct using argptr
   // when state in ptable is UNUSED then inuse is 0, else 1
@@ -722,15 +715,19 @@ int getpinfo(struct pstat *pstat){
   // find process in ptable with that pid
   // loop through pstat statistics in proc and update pstat struc
 
-  for (int i = 0; i < NPROC; i++) {
-      // Do I need this?: release(&ptable.lock);
-      pstat->inuse[i] = ptable.stats->inuse[i];
-      pstat->pid[i] = ptable.stats->pid[i];
-      pstat->timeslice[i] = ptable.stats->timeslice[i];
-      pstat->compticks[i] = ptable.stats->compticks[i];
-      pstat->schedticks[i] = ptable.stats->schedticks[i];
-      pstat->sleepticks[i] = ptable.stats->sleepticks[i];
-      pstat->switches[i] = ptable.stats->switches[i];
+  struct proc *p; 
+  acquire(&ptable.lock);
+
+  int i = 0;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    pstat->inuse[i] = p->inuse;
+    pstat->pid[i] = p->pid;
+    pstat->timeslice[i] = p->timeslice;
+    pstat->compticks[i] = p->compticks;
+    pstat->schedticks[i] = p->schedticks;
+    pstat->sleepticks[i] = p->sleepticks;
+    pstat->switches[i] = p->switches;
+    i++;
   }
   return -1;
 }
