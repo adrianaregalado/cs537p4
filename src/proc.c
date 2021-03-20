@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include <stddef.h>
 
 // LINKED LIST 
 // NODE STRUCTURE
@@ -57,9 +58,9 @@ void delete(struct proc *del_proc) {
     curr_proc = curr_proc->next;
   }
   //means the last item is to be removed
-  if(curr_proc->pid == tail_proc->pid){
+  if(curr_proc->pid == last_proc->pid){
     prev_proc->next = NULL;
-    tail_proc = prev_proc;
+    last_proc = prev_proc;
     curr_proc = NULL;
     prev_proc = NULL;
   }
@@ -425,9 +426,9 @@ scheduler(void)
     p = head_proc;
     while(p != NULL){
       //each proccess
-      p = head;
+      p = head_proc;
       //1
-      if(p->state == "RUNNABLE"){
+      if(p->state == RUNNABLE){
         //if all the ticks of the process has been used, then we reset
         if(p->schedticks == 0){
           p -> switches++;
@@ -437,7 +438,7 @@ scheduler(void)
           p -> sleepticks = 0;
 
           //deleting the process from the queue
-          delete(p->pid);
+          delete(p);
           enqueue(p);
           continue;
         } else { break; }
@@ -446,14 +447,14 @@ scheduler(void)
         continue;
       }
     }
-    if(p !+ NULL){
+    if(p != NULL){
       p ->schedticks++;
       if(p->timeslice > p->usedslice){
         p->usedslice++;
       }
       else if(p->comp > p->usedcomp){
-        p->usedcomp;
-        p->compticks;
+        // p->usedcomp;
+        // p->compticks;
       }
     }
 
@@ -476,7 +477,7 @@ scheduler(void)
     release(&ptable.lock);
 
   }
-}
+
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores

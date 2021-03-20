@@ -126,5 +126,5 @@ sys_getpinfo(void)
   struct pstat *st;
   if(argptr(0, (void*)&st, sizeof(*st)) < 0)
     return -1;
-  return getpinfo(pstat);
+  return getpinfo(st);
 }
