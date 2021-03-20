@@ -415,9 +415,49 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
+    //-----
+    //queue to decide which process to feed 
+    //for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      //if(p->state != RUNNABLE)
+        //continue;
+    //------new code here----------
+    //accessing the first process in the queue first
+    p = head_proc;
+    while(p != NULL){
+      //each proccess
+      p = head;
+      //1
+      if(p->state == "RUNNABLE"){
+        //if all the ticks of the process has been used, then we reset
+        if(p->schedticks == 0){
+          p -> switches++;
+          p -> timeslice = 10;
+          p -> compticks = 0;
+          p -> schedticks = 0;
+          p -> sleepticks = 0;
+
+          //deleting the process from the queue
+          delete(p->pid);
+          enqueue(p);
+          continue;
+        } else { break; }
+      }
+      else{
         continue;
+      }
+    }
+    if(p !+ NULL){
+      p ->schedticks++;
+      if(p->timeslice > p->usedslice){
+        p->usedslice++;
+      }
+      else if(p->comp > p->usedcomp){
+        p->usedcomp;
+        p->compticks;
+      }
+    }
+
+    //-----end new scheduler------
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
