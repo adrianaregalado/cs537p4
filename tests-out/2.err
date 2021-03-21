@@ -1,6 +1,0 @@
-expect: spawn id exp5 not open
-    while executing
-"expect {
-	"$ "	{}
-	timeout	{puts "XV6_SCHEDULER: timeout"; set testname [lindex $argv 2]; set temp [open "../tests-out/$testname.timeout" w]; close $t..."
-    (file "../../tester/run-xv6-command.exp" line 27)

@@ -11,7 +11,7 @@ main(int argc, char **argv)
     printf(1, "schedtest: Incorrect number of arguments./n");
     exit();
   }
-  
+  printf(1, "test1/n");
   int sliceA = atoi(argv[1]);
   char* sleepA = argv[2];
   int sliceB = atoi(argv[3]);
@@ -30,27 +30,28 @@ main(int argc, char **argv)
   } else if (pidA < 0) {
       exit();
   }
-
+printf(1, "test2/n");
   if (pidB == 0) {
     char *execB[] = {"loop", sleepB, 0};
     exec(execB[0], execB);
   } else if (pidB < 0) {
       exit();
   }
-
+printf(1, "test3/n");
   sleep(sleepParent);
   // After sleeping, the parent calls getpinfo(), and prints one line of two numbers separated by a space:
-  struct pstat p;
-  int result = getpinfo(&p);
+  struct pstat *pstatPtr, pstat;
+  pstatPtr = &pstat;
+  int result = getpinfo(pstatPtr);
   int procA = -1;
   int procB = -1;
   if (result == 0) {
       for( int i = 0; i < NPROC; i++) {
-          if (p.inuse[i]) {
-              if (p.pid[i] == pidA) {
+          if (pstatPtr->inuse[i]) {
+              if (pstatPtr->pid[i] == pidA) {
                 procA = i;
               }
-              if (p.pid[i] == pidB) {
+              if (pstatPtr->pid[i] == pidB) {
                 procB = i;
               }
           }
@@ -58,7 +59,7 @@ main(int argc, char **argv)
   } else {
       printf(1, "schedtest: getpinfo failed.");
   }
-  printf(1, "%d %d\n", p.compticks[procA], p.compticks[procB]);
+  printf(1, "%d %d\n", pstatPtr->compticks[procA], pstatPtr->compticks[procB]);
   // printf(1, "%d %d\n", compticksA, compticksB), where compticksA is the compticks of process A in the pstat structure and similarly for B.
   // The parent then waits for the two loop processes by calling wait() twice, and exits.
   wait();

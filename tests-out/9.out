@@ -1,0 +1,5 @@
+XV6_SCHEDULER	 child 0 has intermediate schedticks 0 != timeslice 3 * switches 0
+XV6_SCHEDULER	 child 1 has intermediate schedticks 0 != timeslice 7 * switches 0
+XV6_SCHEDULER	 child 2 has intermediate schedticks 0 != timeslice 2 * switches 0
+XV6_SCHEDULER	 child 3 has intermediate schedticks 0 != timeslice 9 * switches 0
+XV6_SCHEDULER	 child 4 has intermediate schedticks 0 != timeslice 11 * switches 0

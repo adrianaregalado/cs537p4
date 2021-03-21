@@ -1,0 +1,6 @@
+gcc -fno-pic -static -fno-builtin -fno-strict-aliasing -Og -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie   -c -o schedtest.o schedtest.c
+[01m[Kschedtest.c:[m[K In function ‘[01m[Kmain[m[K’:
+[01m[Kschedtest.c:44:16:[m[K [01;31m[Kerror: [m[K‘[01m[Kp[m[K’ may be used uninitialized in this function [[01;31m[K-Werror=maybe-uninitialized[m[K]
+   44 |   int result = [01;31m[Kgetpinfo(p)[m[K;
+--
+make: *** [<builtin>: schedtest.o] Error 1

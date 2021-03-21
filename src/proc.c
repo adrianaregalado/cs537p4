@@ -77,7 +77,6 @@ void delete(struct proc *del_proc) {
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
-  struct pstat stats[NPROC];
 } ptable;
 
 static struct proc *initproc;
@@ -180,17 +179,13 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
     
-  // Adding the process to the queue
-  p -> timeslice = 1;
-  p -> next = NULL;
-  p -> compticks = 0;
-  p -> usedticks = 0;
-  p -> schedticks = 0;
-  p -> sleepticks = 0;
-  p -> switches = 0;
-  p -> context = (struct context*) sp;
-  enqueue(p);
-
+  //initializing the process
+  p->timeslice = 1; 
+  p->compticks = 0; 
+  p->schedticks = 0;  
+  p->sleepticks = 0; 
+  p->switches = 0;  
+  p->next = NULL;
   return p;
 }
 
@@ -343,11 +338,9 @@ exit(void)
 
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
+  delete(curproc);
   sched();
   panic("zombie exit");
-    
-  // remove the process
-  dequeue(p);
     
 }
 
@@ -416,49 +409,9 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    //-----
-    //queue to decide which process to feed 
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
-    // //------new code here----------
-    // //accessing the first process in the queue first
-    // p = head_proc;
-    // while(p != NULL){
-    //   //each proccess
-    //   p = head_proc;
-    //   //1
-    //   if(p->state == RUNNABLE){
-    //     //if all the ticks of the process has been used, then we reset
-    //     if(p->schedticks == 0){
-    //       p -> switches++;
-    //       p -> timeslice = 10;
-    //       p -> compticks = 0;
-    //       p -> schedticks = 0;
-    //       p -> sleepticks = 0;
-
-    //       //deleting the process from the queue
-    //       delete(p);
-    //       enqueue(p);
-    //       continue;
-    //     } else { break; }
-    //   }
-    //   else{
-    //     continue;
-    //   }
-    // }
-    // if(p != NULL){
-    //   p ->schedticks++;
-    //   if(p->timeslice > p->usedslice){
-    //     p->usedslice++;
-    //   }
-    //   else if(p->comp > p->usedcomp){
-    //     // p->usedcomp;
-    //     // p->compticks;
-    //   }
-    }
-
-    // //-----end new scheduler------
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
@@ -477,7 +430,7 @@ scheduler(void)
     release(&ptable.lock);
 
   }
-
+}
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores
@@ -586,16 +539,16 @@ wakeup1(void *chan)
     if(p->state == SLEEPING && p->chan == chan) {
       // have some additional condition checking to avoid falsely waking up the sleeping process
       // (e.g. checking whether chan == &ticks, and whether it is the right time to wake up, etc)
-      // if (chan == &ticks && ticks < p->targettime) {
+      // if (chan == &ticks && ticks < p->wakeupat) {
 
       // }
       // else{
-      //   p->state = RUNNABLE;
-      //   p->slept = ticks - p->sleptat;
+        p->state = RUNNABLE;
+        // p->slept = ticks - p->sleptat;
 
-      //   p->comp = p->slept;
-      //   p->sleepticks += p->slept;
-      //   enqueue(p);
+        // p->comp = p->slept;
+        // p->sleepticks += p->slept;
+        // enqueue(p);
       // }
     }
 }
@@ -699,6 +652,7 @@ int fork2(int slice){
     pid = np->pid;
     acquire(&ptable.lock);
     np->state = RUNNABLE;
+    enqueue(np);
     release(&ptable.lock);
 
     return pid;
@@ -708,16 +662,18 @@ int fork2(int slice){
 
 int getpinfo(struct pstat *pstat){
   // TODO: pass a pointer and iterate through the ptable to get the info for each process.
-  // get struct using argptr
   // when state in ptable is UNUSED then inuse is 0, else 1
-  // pstat->timeslice[i];
 
   struct proc *p; 
   acquire(&ptable.lock);
 
   int i = 0;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    pstat->inuse[i] = p->inuse;
+    if(p->state == UNUSED){
+      pstat->inuse[i] = 0;
+      continue;
+    }
+    pstat->inuse[i] = 1;
     pstat->pid[i] = p->pid;
     pstat->timeslice[i] = p->timeslice;
     pstat->compticks[i] = p->compticks;
@@ -726,6 +682,7 @@ int getpinfo(struct pstat *pstat){
     pstat->switches[i] = p->switches;
     i++;
   }
+  release(&ptable.lock);
   return 0;
 }
 
