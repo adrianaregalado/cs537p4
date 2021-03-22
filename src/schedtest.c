@@ -11,11 +11,11 @@ main(int argc, char **argv)
     printf(1, "schedtest: Incorrect number of arguments./n");
     exit();
   }
-  printf(1, "test1/n");
+  //printf(1, "test1/n");
   int sliceA = atoi(argv[1]);
-  char* sleepA = argv[2];
+  //char* sleepA = argv[2];
   int sliceB = atoi(argv[3]);
-  char* sleepB = argv[4];
+  //char* sleepB = argv[4];
   int sleepParent = atoi(argv[5]);
 
   // schedtest spawns two children processes, each running the loop application
@@ -25,44 +25,45 @@ main(int argc, char **argv)
   int pidB = fork2(sliceB);
 
   if (pidA == 0) {
-    char *execA[] = {"loop", sleepA, 0};
+    char *execA[] = {"loop", argv[2], NULL};
     exec(execA[0], execA);
-  } else if (pidA < 0) {
-      exit();
-  }
-printf(1, "test2/n");
+  } 
+//printf(1, "test2/n");
   if (pidB == 0) {
-    char *execB[] = {"loop", sleepB, 0};
+    char *execB[] = {"loop", argv[4], NULL};
     exec(execB[0], execB);
-  } else if (pidB < 0) {
-      exit();
-  }
-printf(1, "test3/n");
+  } 
+  // else if (pidB < 0) {
+  //     exit();
+  // }
+//printf(1, "test3/n");
   sleep(sleepParent);
   // After sleeping, the parent calls getpinfo(), and prints one line of two numbers separated by a space:
-  struct pstat *pstatPtr, pstat;
-  pstatPtr = &pstat;
-  int result = getpinfo(pstatPtr);
+  struct pstat  ps;
+  //pstatPtr = &pstat;
+  getpinfo(&ps);
+  wait();
+  wait();
   int procA = -1;
   int procB = -1;
-  if (result == 0) {
-      for( int i = 0; i < NPROC; i++) {
-          if (pstatPtr->inuse[i]) {
-              if (pstatPtr->pid[i] == pidA) {
-                procA = i;
-              }
-              if (pstatPtr->pid[i] == pidB) {
-                procB = i;
-              }
+  //if (result == 0) {
+  for( int i = 0; i < NPROC; i++) {
+      //if (ps.inuse[i]) {
+          if (ps.pid[i] == pidA) {
+            procA = ps.compticks[i];
+            
           }
-      }
-  } else {
-      printf(1, "schedtest: getpinfo failed.");
+          if (ps.pid[i] == pidB) {
+            procB = ps.compticks[i];
+          }
+      //}
   }
-  printf(1, "%d %d\n", pstatPtr->compticks[procA], pstatPtr->compticks[procB]);
+  // } else {
+  //     printf(1, "schedtest: getpinfo failed.");
+  // }
+  printf(1, "%d %d\n", procA, procB);
   // printf(1, "%d %d\n", compticksA, compticksB), where compticksA is the compticks of process A in the pstat structure and similarly for B.
   // The parent then waits for the two loop processes by calling wait() twice, and exits.
-  wait();
-  wait();
+ 
   exit();
 }

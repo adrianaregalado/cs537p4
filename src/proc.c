@@ -186,6 +186,9 @@ found:
   p->sleepticks = 0; 
   p->switches = 0;  
   p->next = NULL;
+  p->wakeupat = 0;
+  p->slept = 0;
+  p->sleptat = 0;
   return p;
 }
 
@@ -223,7 +226,7 @@ userinit(void)
   acquire(&ptable.lock);
 
   p->state = RUNNABLE;
-
+  enqueue(p);
   release(&ptable.lock);
 }
 
@@ -428,7 +431,6 @@ scheduler(void)
       c->proc = 0;
     }
     release(&ptable.lock);
-
   }
 }
 
@@ -514,8 +516,10 @@ sleep(void *chan, struct spinlock *lk)
   }
   // Go to sleep.
   p->chan = chan;
+  p->sleptat = ticks;
+  p->compticks = 0;
   p->state = SLEEPING;
-
+  delete(p);
   sched();
 
   // Tidy up.
@@ -539,18 +543,15 @@ wakeup1(void *chan)
     if(p->state == SLEEPING && p->chan == chan) {
       // have some additional condition checking to avoid falsely waking up the sleeping process
       // (e.g. checking whether chan == &ticks, and whether it is the right time to wake up, etc)
-      // if (chan == &ticks && ticks < p->wakeupat) {
-
-      // }
-      // else{
+       if (chan == &ticks && ticks < p->wakeupat) {
+         continue;
+         }
         p->state = RUNNABLE;
-        // p->slept = ticks - p->sleptat;
-
-        // p->comp = p->slept;
-        // p->sleepticks += p->slept;
-        // enqueue(p);
-      // }
-    }
+        p->slept = ticks - p->sleptat;
+        p->compticks = p->slept;
+        p->sleepticks += p->slept;
+        enqueue(p);
+      }
 }
 
 // Wake up all processes sleeping on chan.
@@ -569,14 +570,15 @@ int
 kill(int pid)
 {
   struct proc *p;
-
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid){
       p->killed = 1;
       // Wake process from sleep if necessary.
-      if(p->state == SLEEPING)
+      if(p->state == SLEEPING){
         p->state = RUNNABLE;
+        enqueue(p);
+      }
       release(&ptable.lock);
       return 0;
     }
@@ -606,7 +608,7 @@ int getslice(int pid){
   struct proc *p;
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(p->pid == pid){
+    if(p->pid == pid && p->state != UNUSED){
       release(&ptable.lock);
       return p->timeslice;
     }
@@ -622,7 +624,7 @@ int fork2(int slice){
     struct proc *curproc = myproc();
 
     // TODO: Not sure if this should be np or curproc
-    curproc->timeslice = slice;
+    //curproc->timeslice = slice;
 
     // Allocate process.
     if((np = allocproc()) == 0){
@@ -652,9 +654,9 @@ int fork2(int slice){
     pid = np->pid;
     acquire(&ptable.lock);
     np->state = RUNNABLE;
+    np->timeslice = slice;
     enqueue(np);
     release(&ptable.lock);
-
     return pid;
   }
   return -1;
@@ -663,12 +665,14 @@ int fork2(int slice){
 int getpinfo(struct pstat *pstat){
   // TODO: pass a pointer and iterate through the ptable to get the info for each process.
   // when state in ptable is UNUSED then inuse is 0, else 1
-
+  if(pstat == NULL){
+      return -1;
+    }
   struct proc *p; 
   acquire(&ptable.lock);
-
   int i = 0;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    
     if(p->state == UNUSED){
       pstat->inuse[i] = 0;
       continue;
@@ -685,17 +689,6 @@ int getpinfo(struct pstat *pstat){
   release(&ptable.lock);
   return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 //PAGEBREAK: 36
 // Print a process listing to console.  For debugging.

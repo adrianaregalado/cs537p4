@@ -1,4 +1,4 @@
-XV6_SCHEDULER	 iter 0: compticks 0 -> 0 did not progress
-XV6_SCHEDULER	 iter 1: compticks 0 -> 0 did not progress
-XV6_SCHEDULER	 iter 2: compticks 0 -> 0 did not progress
-XV6_SCHEDULER	 iter 3: compticks 0 -> 0 did not progress
+XV6_SCHEDULER	 SUCCESS iter 0
+XV6_SCHEDULER	 iter 1: compticks 1 -> 1 did not progress
+XV6_SCHEDULER	 iter 2: compticks 1 -> 1 did not progress
+XV6_SCHEDULER	 iter 3: compticks 1 -> 1 did not progress

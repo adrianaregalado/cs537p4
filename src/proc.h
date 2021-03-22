@@ -53,13 +53,13 @@ struct proc {
   int timeslice;               // number of base ticks this process can run in a timeslice
   int compticks;               // number of compensation ticks this process has used
   int usedticks;
-  int usedslice;
-  int usedcomp;
-  int comp;
   int schedticks;              // total number of timer ticks this process has been scheduled
   int sleepticks;              // number of ticks during which this process was blocked
   int switches;                // total num times this process has been scheduled
   struct proc *next;           // The process running on this cpu or null
+  int wakeupat;
+  int slept;
+  int sleptat;
 };
 
 struct pstat {
